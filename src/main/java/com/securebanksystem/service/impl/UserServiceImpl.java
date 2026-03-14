@@ -1,36 +1,41 @@
 package com.securebanksystem.service.impl;
 
 import com.securebanksystem.dto.UserDTO;
+import com.securebanksystem.exception.DuplicateEmailException;
+import com.securebanksystem.exception.UserNotFoundException;
 import com.securebanksystem.mapper.UserMapper;
 import com.securebanksystem.model.User;
 import com.securebanksystem.repository.UserRepository;
 import com.securebanksystem.service.UserService;
+
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
+@Transactional
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
-    UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
     @Override
     public User saveUser(User user) {
-        // 1. Check if email already exists
+
         if (userRepository.existsByEmail(user.getEmail())) {
-            // You can throw a custom exception here
-            throw new RuntimeException("Email " + user.getEmail() + " is already registered!");
+            throw new DuplicateEmailException("Email already registered");
         }
 
-        // 2. Set timestamps if they are null
         if (user.getCreatedAt() == null) {
             user.setCreatedAt(LocalDateTime.now());
         }
@@ -38,12 +43,13 @@ public class UserServiceImpl implements UserService {
 
         return userRepository.save(user);
     }
+    @Transactional(readOnly = true)
     @Cacheable(value = "users", key = "#id")
     @Override
     public UserDTO findById(int id) {
 
-        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
-
+        log.info("Fetching user with id {}", id);
+        User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
         return UserMapper.toDTO(user);
     }
 
@@ -51,7 +57,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public User updateById(int id, User user) {
 
-        User existingUser = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+        User existingUser = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
 
         updateUserFields(existingUser, user);
 
@@ -59,25 +65,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Cacheable(value = "users", key = "'all'")
+    @CacheEvict(value = "users", allEntries = true)
     public List<User> getAllUsers() {
-        List<User> user = userRepository.findAll();
-        if (!user.isEmpty()) {
-            return user;
-        } else {
 
-            return List.of();
-        }
+        return userRepository.findAll();
     }
 
     @CacheEvict(value = "users", key = "#id")
     @Override
     public void deleteUser(int id) {
 
-        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
 
         userRepository.delete(user);
-
     }
 
     private void updateUserFields(User existingUser, User user) {
@@ -86,6 +86,7 @@ public class UserServiceImpl implements UserService {
         existingUser.setEmail(user.getEmail());
         existingUser.setMobileNumber(user.getMobileNumber());
         existingUser.setAddress(user.getAddress());
+        existingUser.setUpdatedAt(LocalDateTime.now());
         existingUser.setAccountStatus(user.getAccountStatus());
     }
 
