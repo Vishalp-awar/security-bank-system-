@@ -2,7 +2,9 @@ package com.securebanksystem.controller;
 
 import com.securebanksystem.dto.UserDTO;
 import com.securebanksystem.model.User;
+import com.securebanksystem.respnse.ApiResponse;
 import com.securebanksystem.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,24 +21,24 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<User> saveUser(@RequestBody User user) {
+    public ResponseEntity<ApiResponse<User>> saveUser(@Valid @RequestBody User user) {
         User savedUser = userService.saveUser(user);
-        return ResponseEntity.status(201).body(savedUser);
+        return ResponseEntity.status(201).body(new ApiResponse<>(true,"Registered Successfully",savedUser));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserDTO> getById(@PathVariable int id) {
-        return ResponseEntity.ok(userService.findById(id));
+    public ResponseEntity<ApiResponse<UserDTO>> getById(@PathVariable int id) {
+        return ResponseEntity.ok(new ApiResponse<>(true,"User Fetched Successfully",userService.findById(id)));
     }
 
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
+    public ResponseEntity<ApiResponse<List<User>>> getAllUsers() {
+        return ResponseEntity.ok(new ApiResponse<>(true,"Fetched All Users!",userService.getAllUsers()));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable int id, @RequestBody User user) {
-        return ResponseEntity.ok(userService.updateById(id, user));
+    public ResponseEntity<ApiResponse<User>> updateUser(@Valid @PathVariable int id, @RequestBody User user) {
+        return ResponseEntity.ok(new ApiResponse<>(true,"Updated User SuccessFully", userService.updateById(id, user)));
     }
 
     @DeleteMapping("/{id}")
