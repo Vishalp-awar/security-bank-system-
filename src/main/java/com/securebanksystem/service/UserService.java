@@ -1,18 +1,17 @@
 package com.securebanksystem.service;
 
 import com.securebanksystem.dto.UserDTO;
-import com.securebanksystem.model.User;
 
 import java.util.List;
 
 public interface UserService {
-    User saveUser(User user);
+    UserDTO saveUser(UserDTO user);
 
     UserDTO findById(int id);
 
-    User updateById(int id, User user);
+    UserDTO updateById(int id, UserDTO user);
 
-    List<User> getAllUsers();
+    List<UserDTO> getAllUsers();
 
     void deleteUser(int id);
 }

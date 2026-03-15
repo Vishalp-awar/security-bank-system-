@@ -9,14 +9,17 @@ import com.securebanksystem.repository.UserRepository;
 import com.securebanksystem.service.UserService;
 
 import lombok.extern.slf4j.Slf4j;
+import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -25,23 +28,25 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
-    public UserServiceImpl(UserRepository userRepository) {
+    private final PasswordEncoder passwordEncoder;
+
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
-    public User saveUser(User user) {
+    public UserDTO saveUser(UserDTO user) {
 
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new DuplicateEmailException("Email already registered");
         }
 
-        if (user.getCreatedAt() == null) {
-            user.setCreatedAt(LocalDateTime.now());
-        }
-        user.setUpdatedAt(LocalDateTime.now());
+        User userEntity = UserMapper.toEntity(user);
+        user.setPassword(passwordEncoder.encode(userEntity.getPassword()));
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(userEntity);
+        return UserMapper.toDTO(savedUser);
     }
     @Transactional(readOnly = true)
     @Cacheable(value = "users", key = "#id")
@@ -55,22 +60,23 @@ public class UserServiceImpl implements UserService {
 
     @CachePut(value = "users", key = "#id")
     @Override
-    public User updateById(int id, User user) {
+    public UserDTO updateById(int id, UserDTO user) {
 
         User existingUser = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
 
-        updateUserFields(existingUser, user);
+        updateUserFields(existingUser,user);
 
-        return userRepository.save(existingUser);
+        User updatedUser = userRepository.save(existingUser);
+
+        return UserMapper.toDTO(updatedUser);
     }
 
     @Override
-    @CacheEvict(value = "users", allEntries = true)
-    public List<User> getAllUsers() {
-
-        return userRepository.findAll();
+    @Cacheable(value = "users", key = "'all'")
+    public List<UserDTO> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        return users.stream().map(UserMapper::toDTO).toList();
     }
-
     @CacheEvict(value = "users", key = "#id")
     @Override
     public void deleteUser(int id) {
@@ -80,7 +86,7 @@ public class UserServiceImpl implements UserService {
         userRepository.delete(user);
     }
 
-    private void updateUserFields(User existingUser, User user) {
+    private void updateUserFields(User existingUser, UserDTO user) {
         existingUser.setFirstName(user.getFirstName());
         existingUser.setLastName(user.getLastName());
         existingUser.setEmail(user.getEmail());

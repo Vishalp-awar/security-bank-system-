@@ -1,5 +1,6 @@
 package com.securebanksystem.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,5 +27,14 @@ public class UserDTO implements Serializable {
     private String address;
 
     private String accountStatus;
+
+    private String role;
+
+    private String panNumber;
+
+    private String aadhaarNumber;
+
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String password;
 
 }

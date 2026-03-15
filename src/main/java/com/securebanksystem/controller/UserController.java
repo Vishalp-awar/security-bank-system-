@@ -1,7 +1,6 @@
 package com.securebanksystem.controller;
 
 import com.securebanksystem.dto.UserDTO;
-import com.securebanksystem.model.User;
 import com.securebanksystem.respnse.ApiResponse;
 import com.securebanksystem.service.UserService;
 import jakarta.validation.Valid;
@@ -21,8 +20,8 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<User>> saveUser(@Valid @RequestBody User user) {
-        User savedUser = userService.saveUser(user);
+    public ResponseEntity<ApiResponse<UserDTO>> saveUser(@Valid @RequestBody UserDTO user) {
+        UserDTO savedUser = userService.saveUser(user);
         return ResponseEntity.status(201).body(new ApiResponse<>(true,"Registered Successfully",savedUser));
     }
 
@@ -32,12 +31,12 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<User>>> getAllUsers() {
+    public ResponseEntity<ApiResponse<List<UserDTO>>> getAllUsers() {
         return ResponseEntity.ok(new ApiResponse<>(true,"Fetched All Users!",userService.getAllUsers()));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<User>> updateUser(@Valid @PathVariable int id, @RequestBody User user) {
+    public ResponseEntity<ApiResponse<UserDTO>> updateUser(@Valid @PathVariable int id, @RequestBody UserDTO user) {
         return ResponseEntity.ok(new ApiResponse<>(true,"Updated User SuccessFully", userService.updateById(id, user)));
     }
 
