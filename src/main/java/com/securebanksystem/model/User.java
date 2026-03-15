@@ -3,6 +3,9 @@ package com.securebanksystem.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -13,6 +16,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class User implements Serializable {
 
     @Id
@@ -36,7 +40,6 @@ public class User implements Serializable {
 
     @NotBlank(message = "Password is required")
     @Size(min = 8, message = "Password must be at least 8 characters")
-    @Transient
     private String password;
 
     private String role;
@@ -51,7 +54,10 @@ public class User implements Serializable {
     @Pattern(regexp = "^[0-9]{12}$", message = "Aadhaar must be 12 digits")
     private String aadhaarNumber;
 
+    @CreatedDate
+    @Column(updatable = false)
     private LocalDateTime createdAt;
 
+    @LastModifiedDate
     private LocalDateTime updatedAt;
 }
