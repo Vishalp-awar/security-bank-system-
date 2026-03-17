@@ -19,19 +19,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.disable()) // <--- MUST DISABLE THIS for POST requests to work
                 .authorizeHttpRequests(auth -> auth
-                        // 1. Allow anyone to register (POST to /users)
-                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/users").permitAll()
-
-                        // 2. Protect everything else under /users/** (like /users/1, /users/all)
-                        .requestMatchers("/users/**").authenticated()
-
-                        // 3. Fallback for any other endpoint
+                        .requestMatchers("/users/**").permitAll() // Allow registration
                         .anyRequest().authenticated()
-                )
-                .httpBasic(org.springframework.security.config.Customizer.withDefaults());
-
+                );
         return http.build();
     }
 }
