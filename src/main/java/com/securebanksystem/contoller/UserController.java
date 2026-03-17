@@ -1,4 +1,4 @@
-package com.securebanksystem.controller;
+package com.securebanksystem.contoller;
 
 import com.securebanksystem.dto.UserDTO;
 import com.securebanksystem.respnse.ApiResponse;
@@ -26,7 +26,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<UserDTO>> getById(@PathVariable int id) {
+    public ResponseEntity<ApiResponse<UserDTO>> getById(@PathVariable Long id) {
         return ResponseEntity.ok(new ApiResponse<>(true,"User Fetched Successfully",userService.findById(id)));
     }
 
@@ -36,12 +36,12 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<UserDTO>> updateUser(@Valid @PathVariable int id, @RequestBody UserDTO user) {
+    public ResponseEntity<ApiResponse<UserDTO>> updateUser(@Valid @PathVariable Long id, @RequestBody UserDTO user) {
         return ResponseEntity.ok(new ApiResponse<>(true,"Updated User SuccessFully", userService.updateById(id, user)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable int id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
