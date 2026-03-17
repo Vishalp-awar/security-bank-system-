@@ -14,7 +14,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class UserDTO implements Serializable {
 
-    private int id;
+    private long id;
 
     private String firstName;
 
@@ -34,7 +34,6 @@ public class UserDTO implements Serializable {
 
     private String aadhaarNumber;
 
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
 }
