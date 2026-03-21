@@ -58,17 +58,21 @@
 package com.securebanksystem.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.securebanksystem.configuration.SecurityConfig;
 import com.securebanksystem.contoller.UserController;
 import com.securebanksystem.dto.UserDTO;
 import com.securebanksystem.exception.DuplicateEmailException;
 import com.securebanksystem.exception.UserNotFoundException;
 import com.securebanksystem.service.UserService;
+import com.securebanksystem.uitl.JwtUtils;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -83,6 +87,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(UserController.class)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc(addFilters = false)
+@Import(SecurityConfig.class)
 class UserControllerTest {
 
     @Autowired
@@ -93,6 +98,12 @@ class UserControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @MockitoBean
+    private JwtUtils jwtUtils;
+
+    @MockitoBean
+    private PasswordEncoder passwordEncoder;
 
     @Test
     void testSaveUser() throws Exception {
