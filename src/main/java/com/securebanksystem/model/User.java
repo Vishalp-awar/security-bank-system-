@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
+@Data
 @Getter
 @Setter
 @NoArgsConstructor
@@ -32,7 +33,6 @@ public class User implements Serializable {
 
     @Email(message = "Invalid email format")
     @NotBlank(message = "Email is required")
-    @Column(unique = true)
     private String email;
 
     @Pattern(regexp = "^[0-9]{10}$", message = "Mobile number must be 10 digits")

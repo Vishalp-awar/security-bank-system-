@@ -5,6 +5,7 @@ import com.securebanksystem.dto.UserDTO;
 import com.securebanksystem.exception.DuplicateEmailException;
 import com.securebanksystem.exception.UserNotFoundException;
 import com.securebanksystem.mapper.UserMapper;
+import com.securebanksystem.model.AccountType;
 import com.securebanksystem.model.User;
 import com.securebanksystem.repository.UserRepository;
 import com.securebanksystem.service.UserService;
@@ -84,32 +85,41 @@ public class UserServiceImpl implements UserService {
 //
 //        return UserMapper.toDTO(savedUser);
 //    }
-    @Override
-    public UserDTO saveUser(UserDTO user) {
-        // 1. Basic Validation
-        if (userRepository.existsByEmail(user.getEmail())) {
-            throw new DuplicateEmailException("Email already registered");
-        }
-
-        // 2. Prepare Entity
-        User userEntity = UserMapper.toEntity(user);
-        userEntity.setPassword(passwordEncoder.encode(user.getPassword()));
-        userEntity.setRole(user.getRole());
-        userEntity.setPanNumber(user.getPanNumber());
-        userEntity.setAadhaarNumber(user.getAadhaarNumber());
-
-        // 1. Save User FIRST
-        User savedUser = userRepository.save(userEntity);
-
-        AccountRequest request = new AccountRequest();
-        request.setUserId(savedUser.getId()); // This is now a real ID (e.g., 4)
-        request.setAccountType("SAVINGS");
-        request.setInitialBalance(500.00);
-
-        restTemplate.postForEntity("http://localhost:8081/account", request, Void.class);
-
-        return UserMapper.toDTO(savedUser);
+@Override
+public UserDTO saveUser(UserDTO user) {
+    // 1. Basic Validation
+    if (userRepository.existsByEmail(user.getEmail())) {
+        throw new DuplicateEmailException("Email already registered");
     }
+
+    // 2. Prepare and Save User
+    User userEntity = UserMapper.toEntity(user);
+    userEntity.setPassword(passwordEncoder.encode(user.getPassword()));
+    userEntity.setRole(user.getRole());
+    userEntity.setPanNumber(user.getPanNumber());
+    userEntity.setAadhaarNumber(user.getAadhaarNumber());
+
+    User savedUser = userRepository.save(userEntity);
+
+    // 3. Prepare Account Request
+    AccountRequest request = new AccountRequest();
+    request.setUserId(savedUser.getId());
+    request.setAccountType(AccountType.SAVINGS); // Use the Enum here
+    request.setInitialBalance(500.00);
+    request.setEmail(savedUser.getEmail());
+    request.setFirstName(savedUser.getFirstName());
+
+    log.info("Sending account creation request for user: {}", savedUser.getFirstName());
+
+    // 4. Call Account Microservice
+    try {
+        restTemplate.postForEntity("http://localhost:8081/account", request, Void.class);
+    } catch (Exception e) {
+        log.error("Failed to create account for user {}: {}", savedUser.getId(), e.getMessage());
+    }
+
+    return UserMapper.toDTO(savedUser);
+}
     @Transactional(readOnly = true)
     @Cacheable(value = "users", key = "#id")
     @Override
@@ -146,6 +156,12 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
 
         userRepository.delete(user);
+    }
+
+    @Override
+    public UserDTO findByEmail(String email) {
+        User user = userRepository.findByEmail(email);
+        return UserMapper.toDTO(user);
     }
 
     private void updateUserFields(User existingUser, UserDTO user) {
